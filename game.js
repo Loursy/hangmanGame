@@ -11,6 +11,9 @@ const rl = readline.createInterface({
 let hearth = 1
 let difficulty = 0
 let randomWord = ""
+let leaderBoard = [];
+let point = 0
+
 
 function menu() {
     console.log("<---------WELCOME TO THE HANGMAN GAME--------->")
@@ -24,9 +27,35 @@ function menu() {
             game();
         } else if (answer === "2") {
             console.log("Leaderboard seçildi.")
-            menu();
+            const board = fs.readFileSync('leaderBoard.json', 'utf8');
+
+            if (board.trim() === "") {
+                console.log("Leaderboard şu anda boş.");
+                menu();
+            } else {
+                leaderBoard = JSON.parse(board);
+                console.log("<--------------------------------------------->")
+                leaderBoard.forEach((player, index) => {
+                    const name = player.name;
+                    const score = String(player.score);
+                    console.log(`${index + 1}. ${name} | ${score} points`);
+                })
+                console.log("<--------------------------------------------->")
+                rl.question("Press 'm' for menu or 'q' to quit: ", (key) => {
+                    const choice = key.toLowerCase();
+                    if (choice === "m") {
+                        menu();
+                    } else if (choice === "q") {
+                        console.log("Closing...");
+                        rl.close();
+                    } else {
+                        console.log("Invalid input. Returning to menu...");
+                        menu();
+                    }
+                })
+            }
         } else if (answer === "3") {
-            console.log("quit")
+            console.log("Closing...")
             rl.close();
         } else {
             console.log("Invalid input, please select a valid option")
@@ -59,6 +88,9 @@ function game() {
             hearth = 3
             createWord()
             gameLoop()
+        } else {
+            console.log("Invalid difficulty please select valid difficulty");
+            game();
         }
     })
 }
@@ -127,8 +159,7 @@ function gameLoop() {
                 const masked = maskWord(randomWord, guessedLetters);
                 if (!masked.includes('_')) {
                     console.log(`🎉 You won! The word was: ${randomWord}`);
-                    calculatePoints();
-                    menu();
+                    calculatePoints(menu);
                 } else {
                     askGuess();
                 }
@@ -148,16 +179,31 @@ function gameLoop() {
     askGuess();
 }
 
-function calculatePoints() {
-    let point = 0
-    if(difficulty === 1) {
+function calculatePoints(callback) {
+    if (difficulty === 1) {
         point = randomWord.length * hearth * 30
-    } else if(difficulty === 2) {
+    } else if (difficulty === 2) {
         point = randomWord.length * hearth * 100
-    } else if(difficulty === 3) {
+    } else if (difficulty === 3) {
         point = randomWord.length * hearth * 250
     }
     console.log(`Point: ${point}`)
+    leaderBoardWriter(callback);
+}
+
+function leaderBoardWriter(callback) {
+    let existingData = [];
+    const fileContent = fs.readFileSync('leaderBoard.json', 'utf8')
+    if (fileContent.trim()) {
+        existingData = JSON.parse(fileContent);
+    }
+
+    rl.question("Write your name: ", (playerName) => {
+        existingData.push({ name: playerName, score: point });
+        existingData.sort((a, b) => b.score - a.score);
+        fs.writeFileSync('leaderBoard.json', JSON.stringify(existingData, null, 2));
+        callback();
+    })
 }
 
 menu()
