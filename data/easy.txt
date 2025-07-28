@@ -1,0 +1,10 @@
+apple
+grape
+plane
+chair
+table
+river
+house
+light
+mouse
+plant
