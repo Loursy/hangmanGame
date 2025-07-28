@@ -133,6 +133,7 @@ function gameLoop() {
     let guessedLetters = [];
 
     function askGuess() {
+        console.log("<--------------------------------------------->")
         console.log(`Lives left: ${hearth}`);
         console.log(`Guessed letters: ${guessedLetters.join(', ')}`);
         console.log(`Word: ${maskWord(randomWord, guessedLetters)}`);
@@ -200,7 +201,15 @@ function leaderBoardWriter(callback) {
 
     rl.question("Write your name: ", (playerName) => {
         existingData.push({ name: playerName, score: point });
-        existingData.sort((a, b) => b.score - a.score);
+        for (let i = 0; i < existingData.length; i++) {
+            for (let j = i + 1; j < existingData.length; j++) {
+                if (existingData[j].score > existingData[i].score) {
+                    let temp = existingData[i];
+                    existingData[i] = existingData[j];
+                    existingData[j] = temp;
+                }
+            }
+        }
         fs.writeFileSync('leaderBoard.json', JSON.stringify(existingData, null, 2));
         callback();
     })
