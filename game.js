@@ -127,6 +127,7 @@ function gameLoop() {
                 const masked = maskWord(randomWord, guessedLetters);
                 if (!masked.includes('_')) {
                     console.log(`🎉 You won! The word was: ${randomWord}`);
+                    calculatePoints();
                     menu();
                 } else {
                     askGuess();
@@ -145,6 +146,18 @@ function gameLoop() {
         });
     }
     askGuess();
+}
+
+function calculatePoints() {
+    let point = 0
+    if(difficulty === 1) {
+        point = randomWord.length * hearth * 30
+    } else if(difficulty === 2) {
+        point = randomWord.length * hearth * 100
+    } else if(difficulty === 3) {
+        point = randomWord.length * hearth * 250
+    }
+    console.log(`Point: ${point}`)
 }
 
 menu()

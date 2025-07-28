@@ -8,3 +8,13 @@ house
 light
 mouse
 plant
+haze
+grip
+dusk
+leap
+glow
+brave
+crisp
+flame
+ghost
+shine
