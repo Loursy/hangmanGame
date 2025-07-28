@@ -293,15 +293,15 @@ const animateHangman = () => {
 
 const danceFrames = [
     `
-     \\o/
+     \\😜/
       |
      / \\`,
     `
-      o
+      😜
      /|\\
      / \\`,
     `
-     \\o
+     \\😜
       |\\
      / \\`
 ];
