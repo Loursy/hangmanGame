@@ -16,7 +16,7 @@ let point = 0
 
 
 function menu() {
-    console.log("<---------WELCOME TO THE HANGMAN GAME--------->")
+    console.log("\n<---------WELCOME TO THE HANGMAN GAME--------->")
     console.log("1. NEW GAME")
     console.log("2. LEADERBOARD")
     console.log("3. QUIT")
@@ -65,6 +65,8 @@ function menu() {
 }
 
 function game() {
+    x = 0;
+    i = 0;
     console.log("<--------------------------------------------->")
     console.log("1. EASY")
     console.log("2. MEDIUM")
@@ -134,7 +136,7 @@ function gameLoop() {
 
     function askGuess() {
         console.log("<--------------------------------------------->")
-        console.log(`Lives left: ${hearth}`);
+        console.log(`Lives left: ${hearthAnimation(hearth)}`);
         console.log(`Guessed letters: ${guessedLetters.join(', ')}`);
         console.log(`Word: ${maskWord(randomWord, guessedLetters)}`);
 
@@ -159,8 +161,7 @@ function gameLoop() {
                 console.log("Correct!");
                 const masked = maskWord(randomWord, guessedLetters);
                 if (!masked.includes('_')) {
-                    console.log(`🎉 You won! The word was: ${randomWord}`);
-                    calculatePoints(menu);
+                    danceAnimation();
                 } else {
                     askGuess();
                 }
@@ -169,8 +170,7 @@ function gameLoop() {
                 console.log("Wrong!");
 
                 if (hearth <= 0) {
-                    console.log(`💀 Game over! The word was: ${randomWord}`);
-                    menu();
+                    animateHangman();
                 } else {
                     askGuess();
                 }
@@ -213,6 +213,118 @@ function leaderBoardWriter(callback) {
         fs.writeFileSync('leaderBoard.json', JSON.stringify(existingData, null, 2));
         callback();
     })
+}
+
+const term = require('terminal-kit').terminal;
+
+const frames = [
+    `
+     +---+
+         |
+         |
+         |
+         |
+         |
+    =========`,
+    `
+     +---+
+     |   |
+     O   |
+         |
+         |
+         |
+    =========`,
+    `
+     +---+
+     |   |
+     O   |
+     |   |
+         |
+         |
+    =========`,
+    `
+     +---+
+     |   |
+     O   |
+    /|   |
+         |
+         |
+    =========`,
+    `
+     +---+
+     |   |
+     O   |
+    /|\\  |
+         |
+         |
+    =========`,
+    `
+     +---+
+     |   |
+     O   |
+    /|\\  |
+    /    |
+         |
+    =========`,
+    `
+     +---+
+     |   |
+     💀   |
+    /|\\  |
+    / \\  |
+         |
+    =========`
+];
+
+let i = 0;
+const animateHangman = () => {
+    if (i < frames.length) {
+        term.clear();
+        term.eraseDisplay();
+        term.red(frames[i]);
+        i++;
+        setTimeout(animateHangman, 500);
+    } else {
+        term.bold.red("\n💀 GAME OVER\n");
+        term.green(`The word was: ${randomWord}`);
+        menu();
+    }
+};
+
+const danceFrames = [
+    `
+     \\o/
+      |
+     / \\`,
+    `
+      o
+     /|\\
+     / \\`,
+    `
+     \\o
+      |\\
+     / \\`
+];
+
+let x = 0;
+function danceAnimation() {
+    if (x < danceFrames.length) {
+        term.clear();
+        term.eraseDisplay();
+        term.red(danceFrames[x]);
+        x++;
+        setTimeout(danceAnimation, 500);
+    } else {
+        term.clear();
+        term.yellow('\n🎉 YOU WON! 🕺💃');
+        term.green(`\nThe word was: ${randomWord} \n`);
+        calculatePoints(menu);
+    }
+}
+
+function hearthAnimation(hearth) {
+    const heart = '❤️ ';
+    return heart.repeat(Number(hearth));
 }
 
 menu()
