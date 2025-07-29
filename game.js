@@ -1,6 +1,7 @@
 const readline = require('readline');
 const fs = require('fs');
-
+const statusEnum = require('./statusEnum');
+const difficultyEnum = require('./difficultyEnum');
 const { readFile, writeFile } = require('fs').promises;
 
 const rl = readline.createInterface({
@@ -23,46 +24,53 @@ function menu() {
     console.log("<--------------------------------------------->")
 
     rl.question("Select an option: ", (answer) => {
-        if (answer === "1") {
-            game();
-        } else if (answer === "2") {
-            console.log("Leaderboard seçildi.")
-            const board = fs.readFileSync('leaderBoard.json', 'utf8');
+        switch (Number(answer)) {
+            case statusEnum.GAME:
+                game();
+                break;
 
-            if (board.trim() === "") {
-                console.log("Leaderboard şu anda boş.");
+            case statusEnum.LEADERBOARD:
+                console.log("Leaderboard seçildi.")
+                const board = fs.readFileSync('leaderBoard.json', 'utf8');
+
+                if (board.trim() === "") {
+                    console.log("Leaderboard şu anda boş.");
+                    menu();
+                } else {
+                    leaderBoard = JSON.parse(board);
+                    console.log("<--------------------------------------------->")
+                    leaderBoard.forEach((player, index) => {
+                        const name = player.name;
+                        const score = String(player.score);
+                        console.log(`${index + 1}. ${name} | ${score} points`);
+                    })
+                    console.log("<--------------------------------------------->")
+                    rl.question("Press 'm' for menu or 'q' to quit: ", (key) => {
+                        const choice = key.toLowerCase();
+                        if (choice === "m") {
+                            menu();
+                        } else if (choice === "q") {
+                            console.log("Closing...");
+                            rl.close();
+                        } else {
+                            console.log("Invalid input. Returning to menu...");
+                            menu();
+                        }
+                    })
+                }
+                break;
+            case statusEnum.QUIT:
+                console.log("Closing...")
+                rl.close();
+                break;
+            default:
+                console.log("Invalid input, please select a valid option")
                 menu();
-            } else {
-                leaderBoard = JSON.parse(board);
-                console.log("<--------------------------------------------->")
-                leaderBoard.forEach((player, index) => {
-                    const name = player.name;
-                    const score = String(player.score);
-                    console.log(`${index + 1}. ${name} | ${score} points`);
-                })
-                console.log("<--------------------------------------------->")
-                rl.question("Press 'm' for menu or 'q' to quit: ", (key) => {
-                    const choice = key.toLowerCase();
-                    if (choice === "m") {
-                        menu();
-                    } else if (choice === "q") {
-                        console.log("Closing...");
-                        rl.close();
-                    } else {
-                        console.log("Invalid input. Returning to menu...");
-                        menu();
-                    }
-                })
-            }
-        } else if (answer === "3") {
-            console.log("Closing...")
-            rl.close();
-        } else {
-            console.log("Invalid input, please select a valid option")
-            menu();
         }
     });
 }
+
+
 
 function game() {
     x = 0;
@@ -98,24 +106,24 @@ function game() {
 }
 
 function createWord() {
-    if (difficulty === 1) {
-        const data = fs.readFileSync('data/easy.txt', 'utf8');
-        arr = data.split("\n")
-        const randomIndex = Math.floor(Math.random() * arr.length)
-        randomWord = arr[randomIndex];
+    let filePath;
 
-    } else if (difficulty === 2) {
-        const data = fs.readFileSync('data/medium.txt', 'utf8');
-        arr = data.split("\n")
-        const randomIndex = Math.floor(Math.random() * arr.length)
-        randomWord = arr[randomIndex];
-
-    } else if (difficulty === 3) {
-        const data = fs.readFileSync('data/hard.txt', 'utf8');
-        arr = data.split("\n")
-        const randomIndex = Math.floor(Math.random() * arr.length)
-        randomWord = arr[randomIndex];
+    switch (difficulty) {
+        case difficultyEnum.EASY:
+            filePath = 'data/easy.txt';
+            break;
+        case difficultyEnum.MEDIUM:
+            filePath = 'data/medium.txt';
+            break;
+        case difficultyEnum.HARD:
+            filePath = 'data/hard.txt';
+            break;
     }
+
+    const data = fs.readFileSync(filePath, 'utf8');
+    arr = data.split('\n');
+    const randomIndex = Math.floor(Math.random() * arr.length);
+    randomWord = arr[randomIndex];
 }
 
 function maskWord(randomWord, guessedLetters) {
@@ -130,64 +138,71 @@ function maskWord(randomWord, guessedLetters) {
     return masked.trim();
 }
 
+let guessedLetters = [];
 
 function gameLoop() {
-    let guessedLetters = [];
-
-    function askGuess() {
-        console.log("<--------------------------------------------->")
-        console.log(`Lives left: ${hearthAnimation(hearth)}`);
-        console.log(`Guessed letters: ${guessedLetters.join(', ')}`);
-        console.log(`Word: ${maskWord(randomWord, guessedLetters)}`);
-
-        rl.question("Guess a letter: ", (letter) => {
-            letter = letter.toLowerCase();
-
-            if (letter.length !== 1 || !/[a-z]/.test(letter)) {
-                console.log("Please enter a single valid letter.");
-                askGuess();
-                return;
-            }
-
-            if (guessedLetters.includes(letter)) {
-                console.log("You already guessed that letter.");
-                askGuess();
-                return;
-            }
-
-            guessedLetters.push(letter);
-
-            if (randomWord.includes(letter)) {
-                console.log("Correct!");
-                const masked = maskWord(randomWord, guessedLetters);
-                if (!masked.includes('_')) {
-                    danceAnimation();
-                } else {
-                    askGuess();
-                }
-            } else {
-                hearth--;
-                console.log("Wrong!");
-
-                if (hearth <= 0) {
-                    animateHangman();
-                } else {
-                    askGuess();
-                }
-            }
-        });
-    }
+    guessedLetters = []
     askGuess();
 }
 
+
+function askGuess() {
+    console.log("<--------------------------------------------->")
+    console.log(`Lives left: ${hearthAnimation(hearth)}`);
+    console.log(`Guessed letters: ${guessedLetters.join(', ')}`);
+    console.log(`Word: ${maskWord(randomWord, guessedLetters)}`);
+
+    rl.question("Guess a letter: ", (letter) => {
+        letter = letter.toLowerCase();
+
+        if (letter.length !== 1 || !/[a-z]/.test(letter)) {
+            console.log("Please enter a single valid letter.");
+            askGuess();
+            return;
+        }
+
+        if (guessedLetters.includes(letter)) {
+            console.log("You already guessed that letter.");
+            askGuess();
+            return;
+        }
+
+        guessedLetters.push(letter);
+
+        if (randomWord.includes(letter)) {
+            console.log("Correct!");
+            const masked = maskWord(randomWord, guessedLetters);
+            if (!masked.includes('_')) {
+                danceAnimation();
+            } else {
+                askGuess();
+            }
+        } else {
+            hearth--;
+            console.log("Wrong!");
+
+            if (hearth <= 0) {
+                animateHangman();
+            } else {
+                askGuess();
+            }
+        }
+    });
+}
+
 function calculatePoints(callback) {
-    if (difficulty === 1) {
-        point = randomWord.length * hearth * 30
-    } else if (difficulty === 2) {
-        point = randomWord.length * hearth * 100
-    } else if (difficulty === 3) {
-        point = randomWord.length * hearth * 250
+    switch (difficulty) {
+        case difficultyEnum.EASY:
+            point = randomWord.length * hearth * 30
+            break;
+        case difficultyEnum.MEDIUM:
+            point = randomWord.length * hearth * 100
+            break;
+        case difficultyEnum.HARD:
+            point = randomWord.length * hearth * 250
+            break;
     }
+
     console.log(`Point: ${point}`)
     leaderBoardWriter(callback);
 }
@@ -269,7 +284,7 @@ const frames = [
     `
      +---+
      |   |
-     💀   |
+    💀   |
     /|\\  |
     / \\  |
          |
